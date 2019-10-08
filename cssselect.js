@@ -63,7 +63,7 @@ function relative_url(url1, url2) {
       var sel = myArgs[i];
       var act = myArgs[i+1];
       if (act.indexOf('(relative_url)') != -1) {
-        await page.exposeFunction('relative_url', relative_url);
+        act = act.replace('(relative_url)', '(' + relative_url.toString() + ')');	
       }
       const values = await page.evaluate((sel, act) => Array.from(document.querySelectorAll(sel), eval(act)), sel, act);
       values.forEach(e => { if (typeof(e) === 'string') console.log(e);} );
