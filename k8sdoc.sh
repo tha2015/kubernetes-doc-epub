@@ -90,9 +90,9 @@ function convertmenu {
   local title=$2
 
   ebook-convert  "$file" "$title.epub" --title "$title" --breadth-first  \
-  --level1-toc '//*[@id="docsToc"]/h:div/h:div/h:a' \
-  --level2-toc '//*[@id="docsToc"]/h:div/h:div/h:div/h:div[@class="title"]' \
-  --level3-toc '//*[@id="docsToc"]/h:div/h:div/h:div/h:div[@class="wrapper"]/h:div/h:div/h:a' \
+  --level1-toc '//*[@id="docsToc"]/h:div/h:div/h:div/h:div[@class="title"]' \
+  --level2-toc '//*[@id="docsToc"]/h:div/h:div/h:div/h:div/h:div/h:div/h:a | //*[@id="docsToc"]/h:div/h:div/h:div/h:div/h:div/h:div/h:div/h:div[@class="title"] ' \
+  --level3-toc '//*[@id="docsToc"]/h:div/h:div/h:div/h:div/h:div/h:div/h:div/h:div/h:div/h:div/h:a ' \
   --epub-inline-toc \
   --no-default-epub-cover --publisher Kubernetes --authors Kubernetes --language=en 
   
