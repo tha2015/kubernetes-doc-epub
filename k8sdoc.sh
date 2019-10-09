@@ -33,30 +33,51 @@ function dlsection {
 function dlpage {
   local url=$1
   local file=$(tofilepath $1)
+  local cssfile
+  local cssdir
+  local csslinks
+  local tmp
 
-  title=$(node cssselect.js "$url" 'title' "e => e.textContent.replace(' - Kubernetes','')")
-  header="<!DOCTYPE html><html><head><meta charset='UTF-8'><title>$title</title></head><body>"
-  body=$(node cssselect.js \
-        "$url" \
-        '[id=docsContent] img' "e => e.setAttribute('src',e.src.substring(e.src.lastIndexOf('/') + 1))" \
-        '[id=docsContent] a[href]' 'e=>e.setAttribute("href", (relative_url)(location.href, e.href))' \
-        '#editPageButton,script,.tooltip-text,#pre-footer,#feedback,.feedback--prompt,.feedback--response,.feedback--yes,.feedback--no' 'e=>e.remove()' \
-        '[id=docsContent]' "e => e.outerHTML" \
-        )
-  footer="</body></html>"
-
-
-  # download html
   dir=$(dirname "$file")
   mkdir -p "$dir"
-  touch "$file"
-  echo "$header$body$footer" > "$file"
+
+  # download css
+  node cssselect.js "$url" "link[href^='/css/']" "e => e.href" | while read line
+  do
+    cssfile=$(tofilepath $line)
+    cssdir=$(dirname "$cssfile")
+    mkdir -p "$cssdir"
+    wget -nc --quiet  -P "$cssdir" "$line"
+  done
+  # calculate csslinks
+  csslinks=""
+  tmp=$(node cssselect.js "$url" "link[href^='/css/']" "e => (relative_url)(location.href, e.href)")
+  while read line
+  do
+    csslinks="$csslinks <link rel='stylesheet' href='$line'>"    
+  done  <<< "$(echo -e "$tmp")"
+
+  title=$(node cssselect.js "$url" 'title' "e => e.textContent.replace(' - Kubernetes','')")
+  header="<!DOCTYPE html><html><head><meta charset='UTF-8'><title>$title</title>$csslinks</head><body>"
+
 
   # download images
   node cssselect.js "$url" '[id=docsContent] img' "e => e.src" | while read line
   do
     wget -nc --quiet  -P "$dir" "$line"
   done
+
+  body=$(node cssselect.js \
+        "$url" \
+        '[id=docsContent] img' "e => e.setAttribute('src',e.src.substring(e.src.lastIndexOf('/') + 1))" \
+        '[id=docsContent] a[href]' 'e=>e.getAttribute("href").indexOf('/docs/') === 0 ? e.setAttribute("href", (relative_url)(location.href, e.href)) : null' \
+        '#editPageButton,script,.tooltip-text,#pre-footer,#feedback,.feedback--prompt,.feedback--response,.feedback--yes,.feedback--no' 'e=>e.remove()' \
+        '[id=docsContent]' "e => e.outerHTML" \
+        )
+  footer="</body></html>"
+
+  # download html
+  echo "$header$body$footer" > "$file"
 
   # return page title
   echo $title
@@ -98,21 +119,29 @@ function convertmenu {
   
 }
 
-dlsection "https://kubernetes.io/docs/concepts/" 
-dlsection "https://kubernetes.io/docs/tasks/" 
-dlsection "https://kubernetes.io/docs/tutorials/" 
-dlsection "https://kubernetes.io/docs/reference/" 
+function download_convert {
+  local menufile
 
-#dlpage  "https://kubernetes.io/docs/concepts/overview/what-is-kubernetes/" "overview/what-is-kubernetes/index.html"
+  dlsection "https://kubernetes.io/docs/concepts/" 
+  dlsection "https://kubernetes.io/docs/tasks/" 
+  dlsection "https://kubernetes.io/docs/tutorials/" 
+  dlsection "https://kubernetes.io/docs/reference/" 
+  dlsection "https://kubernetes.io/docs/setup/" 
 
-menufile=$(dlmenu "https://kubernetes.io/docs/concepts/")
-convertmenu "$menufile" "KubernetesConcepts"
+  menufile=$(dlmenu "https://kubernetes.io/docs/concepts/")
+  convertmenu "$menufile" "KubernetesConcepts"
 
-menufile=$(dlmenu "https://kubernetes.io/docs/tasks/")
-convertmenu "$menufile" "KubernetesTasks"
+  menufile=$(dlmenu "https://kubernetes.io/docs/tasks/")
+  convertmenu "$menufile" "KubernetesTasks"
 
-menufile=$(dlmenu "https://kubernetes.io/docs/tutorials/")
-convertmenu "$menufile" "KubernetesTutorials"
+  menufile=$(dlmenu "https://kubernetes.io/docs/tutorials/")
+  convertmenu "$menufile" "KubernetesTutorials"
 
-menufile=$(dlmenu "https://kubernetes.io/docs/reference/")
-convertmenu "$menufile" "KubernetesReference"
+  menufile=$(dlmenu "https://kubernetes.io/docs/reference/")
+  convertmenu "$menufile" "KubernetesReference"
+}
+
+
+download_convert
+
+#dlpage  "https://kubernetes.io/docs/concepts/overview/what-is-kubernetes/" 
