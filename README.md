@@ -11,16 +11,19 @@ Script to create epub files from https://kubernetes.io/docs/
 
 npm i puppeteer --save
 
-### Set PATH environment variable to include ebook-convert program (from Calibre)
 
-export PATH="/Applications/calibre.app/Contents/MacOS/:$PATH"
+### Run script to download web pages to disk
 
-## Run script
+./k8sdoc.mjs
 
-./k8sdoc.sh
+### Generate epub files
+(Make sure PATH environment variable to include ebook-convert program (from Calibre)
+For example, on MACOSX use below command
+export PATH="/Applications/calibre.app/Contents/MacOS/:$PATH")
 
-## (Optional) Use Calibre to convert epub to mobi format
+./k8sdocmjs.sh
 
-## PDF fotmat
+
+## PDF format
 * PDF version of the documents can be found [here](https://github.com/dohsimpson/kubernetes-doc-pdf/)
 
